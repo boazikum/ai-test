@@ -1,0 +1,25 @@
+---
+- name: Install Nginx on web hosts
+  hosts: web
+  become: yes
+  tasks:
+    - name: Install Nginx
+      yum:
+        name: nginx
+        state: present
+      tags: nginx
+
+- name: Edit Nginx configuration
+  hosts: web
+  become: yes
+  tasks:
+    - name: Add new website configuration
+      lineinfile:
+        path: /etc/nginx/nginx.conf
+        insertafter: '# pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000'
+        line: |
+          server {
+            listen 8000;
+            root /data/www/html;
+          }
+      tags: nginx
