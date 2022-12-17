@@ -1,0 +1,66 @@
+provider "azurerm" {
+  version = "2.34.0"
+}
+
+resource "azurerm_resource_group" "example" {
+  name     = "example-resource-group"
+  location = "westus2"
+}
+
+resource "azurerm_virtual_network" "example" {
+  name                = "example-virtual-network"
+  resource_group_name = azurerm_resource_group.example.name
+  location            = azurerm_resource_group.example.location
+  address_space       = ["10.0.0.0/16"]
+}
+
+resource "azurerm_subnet" "example" {
+  name                 = "example-subnet"
+  resource_group_name  = azurerm_resource_group.example.name
+  virtual_network_name = azurerm_virtual_network.example.name
+  address_prefix       = "10.0.1.0/24"
+}
+
+resource "azurerm_network_interface" "example" {
+  name                = "example-network-interface"
+  resource_group_name = azurerm_resource_group.example.name
+  location            = azurerm_resource_group.example.location
+
+  ip_configuration {
+    name                          = "example-ip-configuration"
+    subnet_id                     = azurerm_subnet.example.id
+    private_ip_address_allocation = "Dynamic"
+  }
+}
+
+resource "azurerm_virtual_machine" "example" {
+  name                  = "example-virtual-machine"
+  resource_group_name   = azurerm_resource_group.example.name
+  location              = azurerm_resource_group.example.location
+  network_interface_ids = [azurerm_network_interface.example.id]
+  vm_size               = "Standard_B2s"
+
+  storage_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "20.04-LTS"
+    version   = "latest"
+  }
+
+  storage_os_disk {
+    name              = "example-os-disk"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
+  }
+
+  os_profile {
+    computer_name  = "example-virtual-machine"
+    admin_username = "azureuser"
+    admin_password = "SecurePassword1234!"
+  }
+
+  os_profile_linux_config {
+    disable_password_authentication = false
+  }
+}
